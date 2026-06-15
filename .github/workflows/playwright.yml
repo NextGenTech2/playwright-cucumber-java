@@ -14,15 +14,8 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       
-      # FIX: Install modern versions of missing libraries before Playwright
-      - name: Install System Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libasound2t64 libatk1.0-0t64 libatk-bridge2.0-0t64 libcups2t64 libglib2.0-0t64
-      
-      # Use this to install browsers without trying to use the broken 'with-deps'
-      - name: Install Playwright Browsers
-        run: npx playwright install chromium
+      - name: Install Playwright Browsers and Dependencies
+        run: mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps chromium"
       
       - name: Build and Test
         run: xvfb-run mvn clean test -Dplaywright.skip.browser.download=true -Dheadless=false
