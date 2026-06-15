@@ -1,0 +1,29 @@
+{
+  "employees_csv": "id,name,profile.role,profile.department,tags,active\n101,Reyaansh Sharma,Lead Architect,Engineering,core; api,true\n102,Ananya Iyer,Product Manager,Design,ux; growth,false\n103,Kabir Mehta,Senior Engineer,Engineering,frontend,true",
+  "employees_converted_json": [
+    {
+      "id": 101,
+      "name": "Reyaansh Sharma",
+      "profile.role": "Lead Architect",
+      "profile.department": "Engineering",
+      "tags": "core; api",
+      "active": true
+    },
+    {
+      "id": 102,
+      "name": "Ananya Iyer",
+      "profile.role": "Product Manager",
+      "profile.department": "Design",
+      "tags": "ux; growth",
+      "active": false
+    },
+    {
+      "id": 103,
+      "name": "Kabir Mehta",
+      "profile.role": "Senior Engineer",
+      "profile.department": "Engineering",
+      "tags": "frontend",
+      "active": true
+    }
+  ]
+}

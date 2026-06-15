@@ -1,0 +1,11 @@
+target/
+.allure/
+allure-results/
+.idea/
+*.class
+*.log
+.DS_Store
+.settings/
+.project
+.classpath
+bin/

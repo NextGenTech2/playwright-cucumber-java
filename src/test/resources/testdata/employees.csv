@@ -1,0 +1,4 @@
+id,name,profile.role,profile.department,tags,active
+101,Reyaansh Sharma,Lead Architect,Engineering,core; api,true
+102,Ananya Iyer,Product Manager,Design,ux; growth,false
+103,Kabir Mehta,Senior Engineer,Engineering,frontend,true
