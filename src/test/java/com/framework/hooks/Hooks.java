@@ -57,11 +57,8 @@ public class Hooks {
         // Close page and context to ensure clean state for next scenario
         testContext.getPage().close();
         testContext.getBrowserContext().close();
-    }
 
-    @AfterAll
-    public static void globalTeardown() {
-        // Quit browser instances thread-safely
+        // Quit browser and playwright on the same thread to avoid shutdown hangs
         DriverFactory.quitBrowser();
     }
 }

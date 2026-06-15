@@ -43,11 +43,19 @@ public class DriverFactory {
 
     public static void quitBrowser() {
         if (browserThreadLocal.get() != null) {
-            browserThreadLocal.get().close();
+            try {
+                browserThreadLocal.get().close();
+            } catch (Exception e) {
+                // Ignore
+            }
             browserThreadLocal.remove();
         }
         if (playwrightThreadLocal.get() != null) {
-            playwrightThreadLocal.get().close();
+            try {
+                playwrightThreadLocal.get().close();
+            } catch (Exception e) {
+                // Ignore
+            }
             playwrightThreadLocal.remove();
         }
     }
