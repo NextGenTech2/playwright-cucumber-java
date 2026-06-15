@@ -13,13 +13,20 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: 'maven'
-
-      - name: Install Playwright Browsers and Dependencies
-        run: mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
-
+      
+      # FIX: Install modern versions of missing libraries before Playwright
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2t64 libatk1.0-0t64 libatk-bridge2.0-0t64 libcups2t64 libglib2.0-0t64
+      
+      # Use this to install browsers without trying to use the broken 'with-deps'
+      - name: Install Playwright Browsers
+        run: npx playwright install chromium
+      
       - name: Build and Test
-        run: mvn clean test -Dheadless=true
-
+        run: mvn clean test -Dplaywright.skip.browser.download=true -Dheadless=true
+      
       - name: Upload Allure Report
         uses: actions/upload-artifact@v4
         if: always()
