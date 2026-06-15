@@ -44,7 +44,21 @@ This ensures a fresh browser page is used per scenario and Page objects are auto
 
 ---
 
-## 2. Zero-Hardcoding Data Driven Design
+## 2. Page Object Model (POM) Design Pattern
+
+To separate "how to interact with the webpage" from "what scenarios to test", the codebase strictly adheres to the Page Object Model (POM) pattern.
+
+### 🏛️ Structural Split
+1. **Locators & Elements Isolation**:
+   All element locators (e.g., CSS paths, `data-testid` queries, tag names) are defined as private variables inside the page classes (such as [ApexToolHubPage](file:///d:/Users/nirakumar/Desktop/Niraj/AI/Agy/multi-hub-automation/src/test/java/com/framework/pages/ApexToolHubPage.java)). No HTML/CSS selectors are defined in BDD steps.
+2. **Business Action Encapsulation**:
+   Page Object classes expose UI interactions as business-logic methods (e.g. `enterJsonPayload()`, `clickConvertData()`, `uploadFile()`). 
+3. **UI State Verification**:
+   Page Objects provide simple query methods (e.g. `isFileUploadBlank()`, `isOutputBlankByTestId()`) that return state values to the steps for AssertJ assertions.
+
+---
+
+## 3. Zero-Hardcoding Data Driven Design
 
 Feature files must not contain hardcoded JSON payloads or expected CSV blocks to keep tests maintainable and easy to edit.
 
