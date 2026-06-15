@@ -25,7 +25,7 @@ jobs:
         run: npx playwright install chromium
       
       - name: Build and Test
-        run: mvn clean test -Dplaywright.skip.browser.download=true -Dheadless=true
+        run: xvfb-run mvn clean test -Dplaywright.skip.browser.download=true -Dheadless=false
       
       - name: Upload Allure Report
         uses: actions/upload-artifact@v4
