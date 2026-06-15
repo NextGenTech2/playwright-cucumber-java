@@ -9,11 +9,24 @@ This repository focuses on testing and automating services under the ApexToolHub
 ## 🚀 Key Features
 
 *   **BDD with Cucumber**: Expressive scenarios written in Gherkin syntax.
+*   **Page Object Model (POM)**: Clean separation of BDD steps and page interaction details (locators, actions).
 *   **Playwright Engine**: Ultra-fast execution, auto-waiting, and native headed/headless browser management.
 *   **Zero-Hardcoding / Data-Driven**: Scenario payloads and expected output mappings are parameterized and stored as external files (`payloads.json`, `expected_outputs.json`).
 *   **PicoContainer DI**: Step definition classes share browser state and page object instances cleanly through constructor Dependency Injection (DI).
 *   **Timezone-Portable Epoch Testing**: Dynamically evaluates Epoch date/time values inside the browser instance so that assertions pass flawlessly in any timezone (local, UTC/Jenkins, etc.).
 *   **Stealth Mode Browser**: Bypasses bot/automation detection algorithms on search engines.
+
+---
+
+## 🏛️ Design Patterns
+
+### 1. Page Object Model (POM)
+The framework enforces the Page Object Model (POM) pattern to maintain structural separation:
+*   **Page Classes** (`src/test/java/com/framework/pages/`): Define and encapsulate the page's locators (e.g., `data-testid`, CSS paths) and actions (`clickTool()`, `enterJsonPayload()`, `uploadFile()`). Step definitions invoke these public methods without direct access to Playwright locators.
+*   **Maintainability**: Any changes to UI structure only require modifying the locator definitions in the Page Object class rather than editing BDD step definitions.
+
+### 2. Dependency Injection (DI)
+*   Page Object singletons and the Playwright browser context are managed and passed using **PicoContainer** constructor injection, ensuring isolation and clean state sharing.
 
 ---
 
