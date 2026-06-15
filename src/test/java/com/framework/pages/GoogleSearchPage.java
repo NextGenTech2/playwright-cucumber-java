@@ -23,8 +23,19 @@ public class GoogleSearchPage {
     }
 
     public void clickSearchResultByUrl(String urlFragment) {
-        // Click the first search result header (Google uses h3 for result titles)
-        page.locator("h3").first().waitFor();
-        page.locator("h3").first().click();
+        // Find search result links that contain the target urlFragment (e.g., "apextoolhub.com")
+        com.microsoft.playwright.Locator link = page.locator("a[href*='" + urlFragment + "']");
+        
+        // Wait for the target search result link to become available
+        link.first().waitFor();
+        
+        // Google uses h3 inside the link for the result title.
+        // We click the h3 title or fall back to clicking the link directly.
+        com.microsoft.playwright.Locator title = link.locator("h3");
+        if (title.count() > 0) {
+            title.first().click();
+        } else {
+            link.first().click();
+        }
     }
 }
