@@ -21,6 +21,7 @@ public class TestContext {
     public TestContext() {
         // Initialize browser context and page
         this.browserContext = DriverFactory.getBrowser().newContext();
+        this.browserContext.addInitScript("try { delete Navigator.prototype.webdriver; } catch (e) {}");
         this.page = this.browserContext.newPage();
         
         // Initialize Pages

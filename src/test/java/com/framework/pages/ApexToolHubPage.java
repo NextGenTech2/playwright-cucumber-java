@@ -27,7 +27,7 @@ public class ApexToolHubPage {
     }
 
     public String getPageHeader() {
-        page.locator("h1:has-text('Converter')").waitFor();
+        page.locator("h1").first().waitFor();
         return page.textContent(pageHeader).trim();
     }
 
@@ -58,6 +58,10 @@ public class ApexToolHubPage {
         page.locator("[data-testid='" + testId + "']").click();
     }
 
+    public void clickButtonByText(String text) {
+        page.locator("button:has-text('" + text + "')").first().click();
+    }
+
     public void enterTextByTestId(String testId, String text) {
         com.microsoft.playwright.Locator loc = page.locator("[data-testid='" + testId + "']");
         loc.waitFor();
@@ -69,7 +73,12 @@ public class ApexToolHubPage {
     }
 
     public String getTextByTestId(String testId) {
-        com.microsoft.playwright.Locator loc = page.locator("[data-testid='" + testId + "']");
+        com.microsoft.playwright.Locator loc;
+        if (testId.equals("pre")) {
+            loc = page.locator("pre");
+        } else {
+            loc = page.locator("[data-testid='" + testId + "']");
+        }
         loc.waitFor();
         try {
             String val = loc.inputValue();
@@ -106,5 +115,18 @@ public class ApexToolHubPage {
         }
         String text = locator.textContent();
         return text == null || text.trim().isEmpty();
+    }
+
+    public boolean areAllConverterInputsReset() {
+        page.waitForTimeout(500); // Allow UI to reflect the reset
+        return (Boolean) page.evaluate("() => {" +
+                "  const inputs = Array.from(document.querySelectorAll(" +
+                "    'input[data-testid^=\"data-input-\"], input[data-testid^=\"length-input-\"], input[data-testid^=\"weight-input-\"]'" +
+                "  ));" +
+                "  return inputs.every(input => {" +
+                "    const val = input.value.trim();" +
+                "    return val === '0' || val === '0.0' || val === '';" +
+                "  });" +
+                "}");
     }
 }

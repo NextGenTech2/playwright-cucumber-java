@@ -7,7 +7,7 @@ import org.junit.runner.RunWith;
 @RunWith(Cucumber.class)
 @CucumberOptions(
         features = "src/test/resources/features",
-        tags = "@epochConverter",
+        tags = "@epochConverter or @csvToJsonUpload or @googleSearchCsvToJson or @unitConverter or @jsonSuite or @jsonToXml or @xmlToJson",
         glue = {"com.framework.steps", "com.framework.hooks"},
         plugin = {
                 "pretty",
