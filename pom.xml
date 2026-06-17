@@ -145,7 +145,7 @@
                             -->
                             <forkCount>3</forkCount>
                             <reuseForks>true</reuseForks>
-                            <argLine>-Xmx512m -Xms128m</argLine>
+                            <argLine>-Xmx512m -Xms128m -Dbrowser=${browser}</argLine>
                         </configuration>
                     </execution>
                 </executions>
