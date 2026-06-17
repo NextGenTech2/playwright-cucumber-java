@@ -22,8 +22,16 @@ public class TestContext {
         // Initialize browser context and page
         this.browserContext = DriverFactory.getBrowser().newContext();
         this.browserContext.addInitScript("try { delete Navigator.prototype.webdriver; } catch (e) {}");
+
+        // Set global timeout from config — applies to ALL Playwright operations automatically:
+        // locator.click(), locator.waitFor(), page.navigate(), page.fill(), etc.
+        // No need to pass setTimeout() anywhere manually in the framework.
+        double timeout = Double.parseDouble(
+                com.framework.config.ConfigManager.getProperty("default.timeout", "30000"));
+        this.browserContext.setDefaultTimeout(timeout);
+
         this.page = this.browserContext.newPage();
-        
+
         // Initialize Pages
         this.loginPage = new LoginPage(this.page);
         this.googleSearchPage = new GoogleSearchPage(this.page);

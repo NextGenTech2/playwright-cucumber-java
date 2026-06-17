@@ -112,13 +112,13 @@
                 </configuration>
             </plugin>
 
-            <!-- Surefire Plugin for clean execution & shutdown -->
+            <!-- Surefire Plugin - skipped so Failsafe handles all test execution -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
                 <configuration>
-                    <shutdown>kill</shutdown>
+                    <skip>true</skip>
                 </configuration>
             </plugin>
 
@@ -135,12 +135,17 @@
                         </goals>
                         <configuration>
                             <includes>
-                                <include>**/*Runner.java</include>
+                                <include>**/Runner*.java</include>
                             </includes>
-                            <!-- Cucumber-JVM parallel execution configuration using classes -->
-                            <parallel>classes</parallel>
-                            <threadCount>4</threadCount>
-                            <perCoreThreadCount>true</perCoreThreadCount>
+                            <!--
+                              TRUE PARALLEL: 3 JVM forks, one per Runner class.
+                              forkCount=3 → Runner1, Runner2, Runner3 each get their own JVM.
+                              Each JVM gets its own Playwright + Chromium via ThreadLocal.
+                              argLine caps heap per fork to prevent OOM (3 × 512m = 1.5GB max).
+                            -->
+                            <forkCount>3</forkCount>
+                            <reuseForks>true</reuseForks>
+                            <argLine>-Xmx512m -Xms128m</argLine>
                         </configuration>
                     </execution>
                 </executions>
@@ -157,4 +162,114 @@
             </plugin>
         </plugins>
     </build>
+
+    <!--
+      BROWSER PROFILES
+      ════════════════
+      Run on a specific browser:
+        mvn verify -Pfirefox
+        mvn verify -Pwebkit
+        mvn verify -Pchromium   (default)
+
+      Run on all 3 browsers sequentially in one command:
+        mvn verify -Pall-browsers
+    -->
+    <profiles>
+
+        <!-- Default: Chromium (active unless another profile is selected) -->
+        <profile>
+            <id>chromium</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <browser>chromium</browser>
+            </properties>
+        </profile>
+
+        <!-- Firefox profile -->
+        <profile>
+            <id>firefox</id>
+            <properties>
+                <browser>firefox</browser>
+            </properties>
+        </profile>
+
+        <!-- WebKit (Safari engine) profile -->
+        <profile>
+            <id>webkit</id>
+            <properties>
+                <browser>webkit</browser>
+            </properties>
+        </profile>
+
+        <!-- Cross-browser: runs all 3 browsers sequentially in one mvn verify -->
+        <profile>
+            <id>all-browsers</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <version>3.2.5</version>
+                        <executions>
+                            <!-- Chromium run -->
+                            <execution>
+                                <id>chromium-tests</id>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                                <configuration>
+                                    <includes>
+                                        <include>**/Runner*.java</include>
+                                    </includes>
+                                    <forkCount>3</forkCount>
+                                    <reuseForks>true</reuseForks>
+                                    <argLine>-Xmx512m -Xms128m -Dbrowser=chromium</argLine>
+                                    <reportNameSuffix>chromium</reportNameSuffix>
+                                </configuration>
+                            </execution>
+                            <!-- Firefox run -->
+                            <execution>
+                                <id>firefox-tests</id>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                                <configuration>
+                                    <includes>
+                                        <include>**/Runner*.java</include>
+                                    </includes>
+                                    <forkCount>3</forkCount>
+                                    <reuseForks>true</reuseForks>
+                                    <argLine>-Xmx512m -Xms128m -Dbrowser=firefox</argLine>
+                                    <reportNameSuffix>firefox</reportNameSuffix>
+                                </configuration>
+                            </execution>
+                            <!-- WebKit run -->
+                            <execution>
+                                <id>webkit-tests</id>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                                <configuration>
+                                    <includes>
+                                        <include>**/Runner*.java</include>
+                                    </includes>
+                                    <forkCount>3</forkCount>
+                                    <reuseForks>true</reuseForks>
+                                    <argLine>-Xmx512m -Xms128m -Dbrowser=webkit</argLine>
+                                    <reportNameSuffix>webkit</reportNameSuffix>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+    </profiles>
+
 </project>

@@ -46,9 +46,10 @@ public class ApexToolHubSteps {
         }
         try {
             googleSearchPage.clickSearchResultByUrl(urlFragment);
-            testContext.getPage().waitForURL(url -> !url.contains("google.com"), new Page.WaitForURLOptions().setTimeout(5000));
+            // Global default timeout (config: default.timeout) governs this wait automatically
+            testContext.getPage().waitForURL(url -> !url.contains("google.com"));
         } catch (Exception e) {
-            System.out.println("Google Search result link click failed, timed out, or did not navigate. Navigating directly to apextoolhub.com.");
+            System.out.println("Google Search result link click failed or navigation timed out. Navigating directly to apextoolhub.com. Reason: " + e.getMessage());
             testContext.getPage().navigate("https://apextoolhub.com/");
         }
     }
