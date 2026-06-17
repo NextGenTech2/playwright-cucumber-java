@@ -112,13 +112,13 @@
                 </configuration>
             </plugin>
 
-            <!-- Surefire Plugin for clean execution & shutdown -->
+            <!-- Surefire Plugin - skipped so Failsafe handles all test execution -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
                 <configuration>
-                    <shutdown>kill</shutdown>
+                    <skip>true</skip>
                 </configuration>
             </plugin>
 
@@ -135,12 +135,17 @@
                         </goals>
                         <configuration>
                             <includes>
-                                <include>**/*Runner.java</include>
+                                <include>**/Runner*.java</include>
                             </includes>
-                            <!-- Cucumber-JVM parallel execution configuration using classes -->
-                            <parallel>classes</parallel>
-                            <threadCount>4</threadCount>
-                            <perCoreThreadCount>true</perCoreThreadCount>
+                            <!--
+                              TRUE PARALLEL: 3 JVM forks, one per Runner class.
+                              forkCount=3 → Runner1, Runner2, Runner3 each get their own JVM.
+                              Each JVM gets its own Playwright + Chromium via ThreadLocal.
+                              argLine caps heap per fork to prevent OOM (3 × 512m = 1.5GB max).
+                            -->
+                            <forkCount>3</forkCount>
+                            <reuseForks>true</reuseForks>
+                            <argLine>-Xmx512m -Xms128m</argLine>
                         </configuration>
                     </execution>
                 </executions>
