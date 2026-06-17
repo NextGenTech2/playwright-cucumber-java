@@ -287,7 +287,158 @@ browser=chromium    # Use Playwright's bundled Chromium (lightweight ~80MB)
 headless=true       # Always true for parallel — avoids display/memory conflicts
                     # Do NOT set channel=chrome for parallel — full Chrome (~150MB)
                     # would cause Windows paging file exhaustion across 3 forks
+default.timeout=30000  # Global Playwright timeout (ms) — governs all waits automatically
 ```
+
+---
+
+## 🌐 Cross-Browser Support
+
+Playwright bundles **Chromium, Firefox, and WebKit** natively — no extra driver downloads needed.
+`DriverFactory.java` reads the `browser` property and launches the correct engine.
+
+### Browser-Specific Handling in `DriverFactory.java`
+
+```java
+Browser browser = switch (browserType.toLowerCase()) {
+    case "firefox" -> playwright.firefox().launch(options);  // no extra args
+    case "webkit"  -> playwright.webkit().launch(options);   // no extra args
+    default -> {  // chromium
+        options.setArgs(List.of("--disable-blink-features=AutomationControlled"));
+        yield playwright.chromium().launch(options);
+    }
+};
+```
+
+> `--disable-blink-features=AutomationControlled` is **Chromium-only** — Firefox and WebKit reject it and crash if passed.
+
+---
+
+### Maven Profiles for Browser Selection
+
+Browser profiles are defined in `pom.xml`. Pass `-P<profileId>` to choose a browser:
+
+| Profile | Command | Browser | Notes |
+|---|---|---|---|
+| `chromium` | `mvn verify` | Chromium | ✅ **Default** — active automatically |
+| `chromium` | `mvn verify -Pchromium` | Chromium | Explicit |
+| `firefox` | `mvn verify -Pfirefox` | Firefox | Playwright bundled Gecko |
+| `webkit` | `mvn verify -Pwebkit` | WebKit | Safari engine (cross-platform) |
+| `all-browsers` | `mvn verify -Pall-browsers` | All 3 | Sequential: Chromium → Firefox → WebKit |
+
+---
+
+### Run on a Specific Browser
+
+```powershell
+# Chromium (default — no flag needed)
+mvn verify
+
+# Firefox
+mvn verify -Pfirefox
+
+# WebKit (Safari engine)
+mvn verify -Pwebkit
+
+# Override browser without using a profile
+mvn verify -Dbrowser=firefox
+```
+
+---
+
+### Run on All 3 Browsers (Cross-Browser Suite)
+
+```powershell
+mvn verify -Pall-browsers
+```
+
+This runs **3 complete Failsafe executions** sequentially — one per browser — each with 3 parallel runner forks:
+
+```
+mvn verify -Pall-browsers
+  │
+  ├── Chromium round  →  Runner1 + Runner2 + Runner3 (parallel) → reports with suffix: chromium
+  ├── Firefox  round  →  Runner1 + Runner2 + Runner3 (parallel) → reports with suffix: firefox
+  └── WebKit   round  →  Runner1 + Runner2 + Runner3 (parallel) → reports with suffix: webkit
+```
+
+**Memory budget for `all-browsers`** (browsers run sequentially — only one set active at a time):
+
+| Browser | Forks | JVM heap | Browser RAM | Round total |
+|---|---|---|---|---|
+| Chromium | 3 | 3 × 512MB | 3 × ~80MB | ~1.8GB |
+| Firefox | 3 | 3 × 512MB | 3 × ~70MB | ~1.7GB |
+| WebKit | 3 | 3 × 512MB | 3 × ~50MB | ~1.7GB |
+
+---
+
+### Run Specific Runner on a Specific Browser
+
+```powershell
+# Run only Runner1 on Firefox
+mvn verify -Pfirefox "-Dit.test=Runner1"
+
+# Run @unitConverter on WebKit
+mvn verify -Pwebkit "-Dit.test=Runner1" "-Dcucumber.filter.tags=@unitConverter"
+
+# Run @jsonSuite on Firefox
+mvn verify -Pfirefox "-Dit.test=Runner3" "-Dcucumber.filter.tags=@jsonSuite"
+```
+
+---
+
+### Two Ways to Run on a Specific Browser — What's the Difference?
+
+There are two valid syntaxes to run a specific tag on a specific browser. Both produce the same result but work differently internally:
+
+#### Approach A — Profile + Runner (Structured, Recommended for CI)
+
+```powershell
+mvn verify -Pwebkit "-Dit.test=Runner1" "-Dcucumber.filter.tags=@unitConverter"
+```
+
+#### Approach B — System Property + TestRunner (Ad-hoc, Quick Debug)
+
+```powershell
+mvn verify "-Dit.test=TestRunner" "-Dcucumber.filter.tags=@unitConverter" "-Dbrowser=webkit"
+```
+
+#### Side-by-Side Comparison
+
+| Aspect | Approach A (`-Pwebkit -Dit.test=Runner1`) | Approach B (`-Dit.test=TestRunner -Dbrowser=webkit`) |
+|---|---|---|
+| **Runner class** | `Runner1.java` | `TestRunner.java` |
+| **Browser set by** | Maven profile in `pom.xml` | JVM `-D` system property |
+| **Runner's own tags** | `@epochConverter or @unitConverter` | ALL tags (every scenario) |
+| **Tag filter source** | Narrows Runner1's scoped tags | Narrows from all available tags |
+| **Matches `**/Runner*.java`?** | ✅ Yes — naturally | ❌ No — bypassed via explicit `-Dit.test` |
+| **Best for** | CI pipelines, structured runs | Quick local debugging |
+| **Practical result** | ✅ Runs `@unitConverter` on WebKit | ✅ Runs `@unitConverter` on WebKit |
+
+#### How They Work Internally
+
+```
+Approach A: -Pwebkit -Dit.test=Runner1 -Dcucumber.filter.tags=@unitConverter
+  pom.xml profile sets:    browser = webkit
+  Runner1's own tags:      @epochConverter OR @unitConverter
+  CLI filter applied:      @unitConverter
+  Effective result:        @unitConverter on WebKit ✅
+
+Approach B: -Dit.test=TestRunner -Dbrowser=webkit -Dcucumber.filter.tags=@unitConverter
+  System.getProperty:      browser = webkit
+  TestRunner's own tags:   ALL tags (no restriction)
+  CLI filter applied:      @unitConverter
+  Effective result:        @unitConverter on WebKit ✅
+```
+
+> **When to use which:**
+> - **Approach A** — Use in CI/CD pipelines. Browser is version-controlled in `pom.xml`.
+>   Runner scope is intentional — only runs features that runner owns.
+> - **Approach B** — Use for quick local debugging. No need to know which Runner owns which tag.
+>   `TestRunner` sees all features, so any tag works without mapping knowledge.
+>
+> ⚠️ **Do NOT mix both**: `mvn verify -Pwebkit -Dbrowser=chromium`
+> `-D` system property takes priority over the Maven profile `<properties>` — the profile is silently overridden.
 
 ---
 
@@ -356,13 +507,17 @@ mvn verify "-Dit.test=Runner3" "-Dcucumber.filter.tags=@jsonSuite"
 
 ### Parallel vs Sequential — Quick Reference
 
-| Command | Plugin | Mode | Time |
+| Command | Browser | Mode | Time |
 |---|---|---|---|
-| `mvn test` | Surefire | **SKIPPED** (disabled) | — |
-| `mvn verify` | Failsafe | ✅ All 3 runners in parallel | ~Slowest runner |
-| `mvn verify "-Dit.test=Runner1"` | Failsafe | ✅ Runner1 only | ~Runner1 time |
-| `mvn verify "-Dit.test=Runner1" "-Dcucumber.filter.tags=@unitConverter"` | Failsafe | ✅ Single tag | ~Scenario time |
-| Right-click `TestRunner.java` → Run As JUnit | IDE | Sequential (all tags) | Sum of all |
+| `mvn test` | — | **SKIPPED** (Surefire disabled) | — |
+| `mvn verify` | Chromium | ✅ All 3 runners parallel | ~Slowest runner |
+| `mvn verify -Pfirefox` | Firefox | ✅ All 3 runners parallel | ~Slowest runner |
+| `mvn verify -Pwebkit` | WebKit | ✅ All 3 runners parallel | ~Slowest runner |
+| `mvn verify -Pall-browsers` | All 3 | Chromium → Firefox → WebKit | ~3× single-browser |
+| `mvn verify "-Dit.test=Runner1"` | Chromium | ✅ Runner1 only | ~Runner1 time |
+| `mvn verify -Pfirefox "-Dit.test=Runner1"` | Firefox | ✅ Runner1 only | ~Runner1 time |
+| `mvn verify "-Dit.test=Runner1" "-Dcucumber.filter.tags=@unitConverter"` | Chromium | ✅ Single tag | ~Scenario time |
+| Right-click `TestRunner.java` → Run As JUnit | Chromium | Sequential (all tags) | Sum of all |
 
 ---
 
@@ -375,5 +530,7 @@ mvn verify "-Dit.test=Runner3" "-Dcucumber.filter.tags=@jsonSuite"
 | `-Dit.test=Runner1` (unquoted in PowerShell) | `Unknown lifecycle phase ".test=Runner1"` | Quote it: `"-Dit.test=Runner1"` |
 | `**/*Runner.java` include pattern | Only `TestRunner` runs, not `Runner1/2/3` | Use `**/Runner*.java` pattern |
 | Using `mvn test` instead of `mvn verify` | Surefire skipped, no tests run | Always use `mvn verify` for Failsafe |
+| Passing `--disable-blink-features` to Firefox/WebKit | Browser launch crash | Only Chromium uses this arg — handled in `DriverFactory` |
+| `mvn verify -Pfirefox -Dbrowser=chromium` | Profile overridden by `-D` flag | `-D` takes priority over profile — use one or the other |
 
 

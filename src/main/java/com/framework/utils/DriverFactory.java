@@ -23,17 +23,21 @@ public class DriverFactory {
 
             String channel = com.framework.config.ConfigManager.getProperty("channel", "");
 
+            // --disable-blink-features is Chromium-only; Firefox and WebKit reject it
             BrowserType.LaunchOptions options = new BrowserType.LaunchOptions()
-                .setHeadless(isHeadless)
-                .setArgs(java.util.Arrays.asList("--disable-blink-features=AutomationControlled"));
-            if (channel != null && !channel.isEmpty()) {
-                options.setChannel(channel);
-            }
+                .setHeadless(isHeadless);
 
             Browser browser = switch (browserType.toLowerCase()) {
                 case "firefox" -> playwright.firefox().launch(options);
                 case "webkit" -> playwright.webkit().launch(options);
-                default -> playwright.chromium().launch(options);
+                default -> {
+                    // Chromium-specific stealth args
+                    options.setArgs(java.util.Arrays.asList("--disable-blink-features=AutomationControlled"));
+                    if (channel != null && !channel.isEmpty()) {
+                        options.setChannel(channel);
+                    }
+                    yield playwright.chromium().launch(options);
+                }
             };
 
             browserThreadLocal.set(browser);
