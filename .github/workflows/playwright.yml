@@ -18,8 +18,14 @@ jobs:
         run: mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps chromium"
       
       - name: Build and Test
-        run: xvfb-run mvn clean test -Dplaywright.skip.browser.download=true -Dheadless=false
+        run: xvfb-run mvn clean verify -Dplaywright.skip.browser.download=true -Dheadless=false
       
+      - name: Test Summary
+        uses: test-summary/action@v2
+        with:
+          paths: "**/target/failsafe-reports/TEST-*.xml"
+        if: always()
+
       - name: Upload Allure Report
         uses: actions/upload-artifact@v4
         if: always()

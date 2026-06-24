@@ -127,26 +127,19 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <version>3.2.5</version>
+                <configuration>
+                    <redirectTestOutputToFile>false</redirectTestOutputToFile>
+                    <runOrder>alphabetical</runOrder>
+                    <includes>
+                        <include>**/*Test.java</include>
+                    </includes>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>
                             <goal>integration-test</goal>
                             <goal>verify</goal>
                         </goals>
-                        <configuration>
-                            <includes>
-                                <include>**/Runner*.java</include>
-                            </includes>
-                            <!--
-                              TRUE PARALLEL: 3 JVM forks, one per Runner class.
-                              forkCount=3 → Runner1, Runner2, Runner3 each get their own JVM.
-                              Each JVM gets its own Playwright + Chromium via ThreadLocal.
-                              argLine caps heap per fork to prevent OOM (3 × 512m = 1.5GB max).
-                            -->
-                            <forkCount>3</forkCount>
-                            <reuseForks>true</reuseForks>
-                            <argLine>-Xmx512m -Xms128m -Dbrowser=${browser}</argLine>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
