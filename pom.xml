@@ -127,19 +127,19 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <version>3.2.5</version>
-                <configuration>
-                    <redirectTestOutputToFile>false</redirectTestOutputToFile>
-                    <runOrder>alphabetical</runOrder>
-                    <includes>
-                        <include>**/*Test.java</include>
-                    </includes>
-                </configuration>
                 <executions>
                     <execution>
                         <goals>
                             <goal>integration-test</goal>
                             <goal>verify</goal>
                         </goals>
+                        <configuration>
+                            <redirectTestOutputToFile>false</redirectTestOutputToFile>
+                            <runOrder>alphabetical</runOrder>
+                            <includes>
+                                <include>**/*Test.java</include>
+                            </includes>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
