@@ -137,8 +137,12 @@
                             <redirectTestOutputToFile>false</redirectTestOutputToFile>
                             <runOrder>alphabetical</runOrder>
                             <includes>
-                                <include>**/*Test.java</include>
+                                <include>**/*Runner*.java</include>
                             </includes>
+                            <!-- Run all 4 runners in parallel (Runner1, Runner2, Runner3, TestRunner) -->
+                            <forkCount>4</forkCount>
+                            <reuseForks>true</reuseForks>
+                            <argLine>-Xmx512m -Xms128m</argLine>
                         </configuration>
                     </execution>
                 </executions>
